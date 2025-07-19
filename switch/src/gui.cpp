@@ -50,7 +50,26 @@ HostInterface::HostInterface(Host *host)
 	// push login pin view onto the stack in callback fn
 	this->host->SetEventLoginPinRequestCallback(std::bind(&HostInterface::EnterPin, this, std::placeholders::_1));
 	// allow host to update controller state
-	this->host->SetEventRumbleCallback(std::bind(&IO::SetRumble, this->io, std::placeholders::_1, std::placeholders::_2));
+	this->host->SetEventRumbleCallback([this](uint8_t left, uint8_t right) {
+        HapticPreset haptic = this->settings->GetHaptic(this->host);
+        switch (haptic) {
+            case HAPTIC_PRESET_DIABLED:
+                // Disable rumble
+                this->io->SetRumble(0, 0);
+                break;
+            case HAPTIC_PRESET_WEAK:
+                // Scale rumble down for weak
+                this->io->SetRumble(left / 3, right / 3);
+                break;
+            case HAPTIC_PRESET_STRONG:
+                // Use full rumble strength
+                this->io->SetRumble(left, right);
+                break;
+            default:
+                this->io->SetRumble(left, right);
+                break;
+        }
+    });
 	this->host->SetReadControllerCallback(std::bind(&IO::UpdateControllerState, this->io, std::placeholders::_1, std::placeholders::_2));
 }
 
