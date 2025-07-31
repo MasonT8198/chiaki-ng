@@ -523,6 +523,27 @@ bool MainApplication::BuildConfigurationMenu(brls::List *ls, Host *host)
 		}
 		this->settings->SetHaptic(host, value);
 		this->settings->WriteFile();
+
+		// Test rumble feedback when changing rumble mode
+		IO* io = IO::GetInstance();
+		switch(value)
+		{
+			case HAPTIC_PRESET_DIABLED:
+				io->SetRumble(0, 0);
+				break;
+			case HAPTIC_PRESET_WEAK:
+				io->SetRumble(60, 60); // weak rumble
+				break;
+			case HAPTIC_PRESET_STRONG:
+				io->SetRumble(180, 180); // strong rumble
+				break;
+			default:
+				io->SetRumble(0, 0);
+				break;
+		}
+		// Stop rumble after a short delay (e.g. 200ms)
+		usleep(200000);
+		io->SetRumble(0, 0);
 	};
 
 	haptic->getValueSelectedEvent()->subscribe(haptic_cb);
